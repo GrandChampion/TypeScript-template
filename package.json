@@ -1,0 +1,16 @@
+{
+  "name": "TypeScript-template",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/GrandChampion/TypeScript-template.git",
+  "author": "Yeongu <yeongu@student.ubc.ca>",
+  "license": "MIT",
+  "dependencies": {
+    "fs-extra": "^11.1.0",
+    "jszip": "^3.10.1",
+    "parse5": "^7.1.2"
+  },
+  "devDependencies": {
+    "@types/fs-extra": "^11.0.1"
+  }
+}
