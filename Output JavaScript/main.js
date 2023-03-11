@@ -40,26 +40,25 @@ function parseRoomData(id, htmlData) {
     return __awaiter(this, void 0, void 0, function* () {
         let roomData = fs.readFileSync("DMP1.htm", "utf8");
         let document1 = parse5.parse(roomData);
-        let fullBuildingName = searchData(document1, "id", "building-info").childNodes[1].childNodes[0].childNodes[0].value;
-        let address = searchData(document1, "id", "building-info").childNodes[3].childNodes[1].childNodes[0].value;
+        let fullBuildingName = searchData(document1, "id", "building-info").childNodes[1].childNodes[0].childNodes[0].value.trim();
+        let address = searchData(document1, "id", "building-info").childNodes[3].childNodes[0].childNodes[0].value.trim();
         let addressLongLat = yield getLongLat(address);
-        let lattitude = addressLongLat.lat;
+        let latitude = addressLongLat.lat;
         let longitude = addressLongLat.lon;
-        console.log(lattitude);
-        console.log(longitude);
         let numberOfRooms = Math.floor(searchData(document1, "class", "views-table cols-5 table").childNodes[3].childNodes.length / 2);
-        let i = 2;
+        let i = 3;
         let roomNumbers = searchData(document1, "class", "views-table cols-5 table").childNodes[3].childNodes[2 * i - 1]
-            .childNodes[1].childNodes[1].childNodes[0].value;
+            .childNodes[1].childNodes[1].childNodes[0].value.trim();
         let roomSeats = searchData(document1, "class", "views-table cols-5 table").childNodes[3].childNodes[2 * i - 1]
-            .childNodes[3].childNodes[0].value;
+            .childNodes[3].childNodes[0].value.trim();
         let roomFurniture = searchData(document1, "class", "views-table cols-5 table").childNodes[3].childNodes[2 * i - 1]
-            .childNodes[5].childNodes[0].value;
+            .childNodes[5].childNodes[0].value.trim();
         let roomType = searchData(document1, "class", "views-table cols-5 table").childNodes[3].childNodes[2 * i - 1]
-            .childNodes[7].childNodes[0].value;
+            .childNodes[7].childNodes[0].value.trim();
         let roomHref = searchData(document1, "class", "views-table cols-5 table").childNodes[3].childNodes[2 * i - 1]
-            .childNodes[9].childNodes[1].attrs[0].value;
-        console.log(numberOfRooms);
+            .childNodes[9].childNodes[1].attrs[0].value.trim();
+        console.log(fullBuildingName);
+        console.log(address);
         console.log(roomNumbers);
         console.log(roomSeats);
         console.log(roomFurniture);

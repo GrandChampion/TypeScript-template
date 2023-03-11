@@ -2,6 +2,19 @@ import * as fs from "fs-extra";
 import * as parse5 from "parse5";
 import * as http from "http";
 
+
+
+
+
+export function stringList2jsonList(id: string, htmlArray: string[]) {
+    let jsonList = [];
+    for (let html of htmlArray) {
+        let json = parseRoomData(id, html);
+        jsonList.push(json);
+    }
+    return jsonList;
+}
+
 // Input: single html string (e.g DMP.htm)
 // Effect save room.json to following location
 export async function parseRoomData(id: string, htmlData: string): Promise<void> {
@@ -11,40 +24,42 @@ export async function parseRoomData(id: string, htmlData: string): Promise<void>
 
     let document1 = parse5.parse(roomData);
     // Getting the same things: full name, short name, address, lat, lon
-    let fullBuildingName = searchData(document1, "id", "building-info").childNodes[1].childNodes[0].childNodes[0].value;
+    let fullBuildingName = searchData(document1, "id", "building-info").childNodes[1].childNodes[0].childNodes[0].value.trim();
     // let shortBuildingName
-    let address = searchData(document1, "id", "building-info").childNodes[3].childNodes[1].childNodes[0].value;
+    let address = searchData(document1, "id", "building-info").childNodes[3].childNodes[0].childNodes[0].value.trim();
 
     let addressLongLat = await getLongLat(address);
     let latitude = addressLongLat.lat;
     let longitude = addressLongLat.lon;
 
-    console.log(latitude);
-    console.log(longitude);
+    // console.log(latitude);
+    // console.log(longitude);
     let numberOfRooms = Math.floor(
         searchData(document1, "class", "views-table cols-5 table").childNodes[3].childNodes.length / 2
     );
 
-    let i = 2;
+    let i = 3
     // getting different things: number, seats, type, furniture, href
     let roomNumbers = searchData(document1, "class", "views-table cols-5 table").childNodes[3].childNodes[2 * i - 1]
-        .childNodes[1].childNodes[1].childNodes[0].value;
+        .childNodes[1].childNodes[1].childNodes[0].value.trim();
     let roomSeats = searchData(document1, "class", "views-table cols-5 table").childNodes[3].childNodes[2 * i - 1]
-        .childNodes[3].childNodes[0].value;
+        .childNodes[3].childNodes[0].value.trim();
     let roomFurniture = searchData(document1, "class", "views-table cols-5 table").childNodes[3].childNodes[2 * i - 1]
-        .childNodes[5].childNodes[0].value;
+        .childNodes[5].childNodes[0].value.trim();
     let roomType = searchData(document1, "class", "views-table cols-5 table").childNodes[3].childNodes[2 * i - 1]
-        .childNodes[7].childNodes[0].value;
+        .childNodes[7].childNodes[0].value.trim();
     let roomHref = searchData(document1, "class", "views-table cols-5 table").childNodes[3].childNodes[2 * i - 1]
-        .childNodes[9].childNodes[1].attrs[0].value;
+        .childNodes[9].childNodes[1].attrs[0].value.trim();
 
     // Print
-    console.log(numberOfRooms);
+    console.log(fullBuildingName)
+    console.log(address);
     console.log(roomNumbers);
     console.log(roomSeats);
     console.log(roomFurniture);
     console.log(roomType);
     console.log(roomHref);
+
 
     let roomJson = {
         [id + "_fullname"]: fullBuildingName,
@@ -60,22 +75,6 @@ export async function parseRoomData(id: string, htmlData: string): Promise<void>
         [id + "_href"]: String,
     };
 }
-
-// recursively find id from html tree
-// export function searchData(node: any, attributeType: String, attributeValue: String): any {
-//     if (node.attrs && node.attrs.find((res: any) => res.name === attributeType && res.value === attributeValue)) {
-//         return node;
-//     } else if (node.childNodes) {
-//         for (const childNode of node.childNodes) {
-//             const foundNode = searchData(childNode, attributeType, attributeValue);
-//             // if (foundNode != undefined) {
-//             //     return foundNode;
-//             // }
-//             (foundNode != undefined) ? (return foundNode) : null;
-//         }
-//     }
-//     return undefined;
-// }
 
 export function searchData(node: any, attributeType: string, attributeValue: string): any {
     if (node.attrs) {
