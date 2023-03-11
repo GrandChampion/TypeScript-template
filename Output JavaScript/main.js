@@ -39,7 +39,7 @@ const http = __importStar(require("http"));
 function parseRoomData(id, htmlData) {
     return __awaiter(this, void 0, void 0, function* () {
         let roomData = fs.readFileSync("DMP1.htm", "utf8");
-        const document1 = parse5.parse(roomData);
+        let document1 = parse5.parse(roomData);
         let fullBuildingName = searchData(document1, "id", "building-info").childNodes[1].childNodes[0].childNodes[0].value;
         let address = searchData(document1, "id", "building-info").childNodes[3].childNodes[1].childNodes[0].value;
         let addressLongLat = yield getLongLat(address);
@@ -49,11 +49,16 @@ function parseRoomData(id, htmlData) {
         console.log(longitude);
         let numberOfRooms = Math.floor(searchData(document1, "class", "views-table cols-5 table").childNodes[3].childNodes.length / 2);
         let i = 2;
-        let roomNumbers = searchData(document1, "class", "views-table cols-5 table").childNodes[3].childNodes[2 * i - 1].childNodes[1].childNodes[1].childNodes[0].value;
-        let roomSeats = searchData(document1, "class", "views-table cols-5 table").childNodes[3].childNodes[2 * i - 1].childNodes[3].childNodes[0].value;
-        let roomFurniture = searchData(document1, "class", "views-table cols-5 table").childNodes[3].childNodes[2 * i - 1].childNodes[5].childNodes[0].value;
-        let roomType = searchData(document1, "class", "views-table cols-5 table").childNodes[3].childNodes[2 * i - 1].childNodes[7].childNodes[0].value;
-        let roomHref = searchData(document1, "class", "views-table cols-5 table").childNodes[3].childNodes[2 * i - 1].childNodes[9].childNodes[1].attrs[0].value;
+        let roomNumbers = searchData(document1, "class", "views-table cols-5 table").childNodes[3].childNodes[2 * i - 1]
+            .childNodes[1].childNodes[1].childNodes[0].value;
+        let roomSeats = searchData(document1, "class", "views-table cols-5 table").childNodes[3].childNodes[2 * i - 1]
+            .childNodes[3].childNodes[0].value;
+        let roomFurniture = searchData(document1, "class", "views-table cols-5 table").childNodes[3].childNodes[2 * i - 1]
+            .childNodes[5].childNodes[0].value;
+        let roomType = searchData(document1, "class", "views-table cols-5 table").childNodes[3].childNodes[2 * i - 1]
+            .childNodes[7].childNodes[0].value;
+        let roomHref = searchData(document1, "class", "views-table cols-5 table").childNodes[3].childNodes[2 * i - 1]
+            .childNodes[9].childNodes[1].attrs[0].value;
         console.log(numberOfRooms);
         console.log(roomNumbers);
         console.log(roomSeats);
@@ -71,7 +76,7 @@ function parseRoomData(id, htmlData) {
             [id + "_seats"]: Number,
             [id + "_type"]: String,
             [id + "_furniture"]: String,
-            [id + "_href"]: String
+            [id + "_href"]: String,
         };
     });
 }
@@ -96,10 +101,10 @@ function searchData(node, attributeType, attributeValue) {
 }
 exports.searchData = searchData;
 function getLongLat(address) {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
         let formattedAddress = "http://cs310.students.cs.ubc.ca:11316/api/v1/project_team088/" + address.replace(/ /g, "%20");
         http.get(formattedAddress, function (received) {
-            received.on('data', (requestedData) => {
+            received.on("data", (requestedData) => {
                 let JsonString = "" + requestedData;
                 let longlatJson = JSON.parse(JsonString);
                 resolve(longlatJson);
