@@ -1,0 +1,93 @@
+[
+    {
+      Harvard_fullname: 'Hugh Dempster Pavilion',
+      Harvard_shortname: 'DMP',
+      Harvard_number: '101',
+      Harvard_name: 'DMP_101',
+      Harvard_address: '6245 Agronomy Road V6T 1Z4',
+      Harvard_lat: 49.26125,
+      Harvard_lon: -123.24807,
+      Harvard_seats: '40',
+      Harvard_type: 'Small Group',
+      Harvard_furniture: 'Classroom-Movable Tables & Chairs',
+      Harvard_href: 'http: //students.ubc.ca/campus/discover/buildings-and-classrooms/room/DMP-101'
+    },
+    {
+      Harvard_fullname: 'Hugh Dempster Pavilion',
+      Harvard_shortname: 'DMP',
+      Harvard_number: '110',
+      Harvard_name: 'DMP_110',
+      Harvard_address: '6245 Agronomy Road V6T 1Z4',
+      Harvard_lat: 49.26125,
+      Harvard_lon: -123.24807,
+      Harvard_seats: '120',
+      Harvard_type: 'Tiered Large Group',
+      Harvard_furniture: 'Classroom-Fixed Tables/Movable Chairs',
+      Harvard_href: 'http: //students.ubc.ca/campus/discover/buildings-and-classrooms/room/DMP-110'
+    },
+    {
+      Harvard_fullname: 'Hugh Dempster Pavilion',
+      Harvard_shortname: 'DMP',
+      Harvard_number: '201',
+      Harvard_name: 'DMP_201',
+      Harvard_address: '6245 Agronomy Road V6T 1Z4',
+      Harvard_lat: 49.26125,
+      Harvard_lon: -123.24807,
+      Harvard_seats: '40',
+      Harvard_type: 'Small Group',
+      Harvard_furniture: 'Classroom-Movable Tables & Chairs',
+      Harvard_href: 'http: //students.ubc.ca/campus/discover/buildings-and-classrooms/room/DMP-201'
+    },
+    {
+      Harvard_fullname: 'Hugh Dempster Pavilion',
+      Harvard_shortname: 'DMP',
+      Harvard_number: '301',
+      Harvard_name: 'DMP_301',
+      Harvard_address: '6245 Agronomy Road V6T 1Z4',
+      Harvard_lat: 49.26125,
+      Harvard_lon: -123.24807,
+      Harvard_seats: '80',
+      Harvard_type: 'Tiered Large Group',
+      Harvard_furniture: 'Classroom-Fixed Tables/Movable Chairs',
+      Harvard_href: 'http: //students.ubc.ca/campus/discover/buildings-and-classrooms/room/DMP-301'
+    },
+    {
+      Harvard_fullname: 'Hugh Dempster Pavilion',
+      Harvard_shortname: 'DMP',
+      Harvard_number: '310',
+      Harvard_name: 'DMP_310',
+      Harvard_address: '6245 Agronomy Road V6T 1Z4',
+      Harvard_lat: 49.26125,
+      Harvard_lon: -123.24807,
+      Harvard_seats: '160',
+      Harvard_type: 'Tiered Large Group',
+      Harvard_furniture: 'Classroom-Fixed Tables/Movable Chairs',
+      Harvard_href: 'http: //students.ubc.ca/campus/discover/buildings-and-classrooms/room/DMP-310'
+    },
+    {
+      Harvard_fullname: 'Brock Hall Annex',
+      Harvard_shortname: 'BRKX',
+      Harvard_number: '2365',
+      Harvard_name: 'BRKX_2365',
+      Harvard_address: '1874 East Mall',
+      Harvard_lat: 49.26862,
+      Harvard_lon: -123.25237,
+      Harvard_seats: '70',
+      Harvard_type: 'Tiered Large Group',
+      Harvard_furniture: 'Classroom-Fixed Tables/Movable Chairs',
+      Harvard_href: 'http: //students.ubc.ca/campus/discover/buildings-and-classrooms/room/BRKX-2365'
+    },
+    {
+      Harvard_fullname: 'Brock Hall Annex',
+      Harvard_shortname: 'BRKX',
+      Harvard_number: '2367',
+      Harvard_name: 'BRKX_2367',
+      Harvard_address: '1874 East Mall',
+      Harvard_lat: 49.26862,
+      Harvard_lon: -123.25237,
+      Harvard_seats: '24',
+      Harvard_type: 'Open Design General Purpose',
+      Harvard_furniture: 'Classroom-Movable Tables & Chairs',
+      Harvard_href: 'http: //students.ubc.ca/campus/discover/buildings-and-classrooms/room/BRKX-2367'
+    }
+]

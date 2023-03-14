@@ -32,33 +32,95 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getLongLat = exports.searchData = exports.parseRoomData = exports.commonBuildingInfo = exports.jsonGenerator = exports.stringList2jsonList = void 0;
+exports.shortNameGenerator = exports.getLongLat = exports.searchData = exports.jsonGenerator = exports.commonBuildingInfo = exports.parseRoomData = exports.stringList2jsonList = void 0;
 const fs = __importStar(require("fs-extra"));
 const parse5 = __importStar(require("parse5"));
 const http = __importStar(require("http"));
 function stringList2jsonList(id, htmlArray) {
     const jsonList = [];
     let promises = [];
-    for (let html of htmlArray) {
-        promises.push(parseRoomData(id, html));
+    for (let i = 0; i < htmlArray.length; i++) {
+        promises.push(parseRoomData(id, htmlArray[i]));
     }
-    Promise.all(promises).then((values) => {
-        for (let value of values) {
-            for (let json of value) {
-                jsonList.push(json);
+    return Promise.all(promises)
+        .then((arr) => {
+        for (let i = 0; i < arr.length; i++) {
+            for (let j = 0; j < arr[i].length; j++) {
+                jsonList.push(arr[i][j]);
             }
         }
         return jsonList;
+    })
+        .catch((error) => {
+        return Promise.reject(error);
     });
 }
 exports.stringList2jsonList = stringList2jsonList;
-function jsonGenerator(numberOfRooms, theDocument, id, fullBuildingName, roomAddress, roomLatitude, roomLongitude, result) {
+function parseRoomData(id, htmlData) {
+    return __awaiter(this, void 0, void 0, function* () {
+        let result = [];
+        let theDocument = parse5.parse(htmlData);
+        let tables = findAllTables(theDocument);
+        let filteredTable = [];
+        for (let i = 0; i < tables.length; i++) {
+            let table = tables[i];
+            if (table.childNodes[1].childNodes[1].childNodes[1].attrs[0].value === "views-field views-field-field-room-number"
+                && table.childNodes[1].childNodes[1].childNodes[3].attrs[0].value === "views-field views-field-field-room-capacity"
+                && table.childNodes[1].childNodes[1].childNodes[5].attrs[0].value === "views-field views-field-field-room-furniture"
+                && table.childNodes[1].childNodes[1].childNodes[7].attrs[0].value === "views-field views-field-field-room-type"
+                && table.childNodes[1].childNodes[1].childNodes[9].attrs[0].value === "views-field views-field-nothing") {
+                filteredTable.push(table);
+            }
+        }
+        if (filteredTable.length > 0) {
+            let { fullBuildingName, roomAddress, roomLatitude, roomLongitude, numberOfRooms } = yield commonBuildingInfo(theDocument);
+            if (roomLatitude === undefined || roomLongitude === undefined) {
+                return result;
+            }
+            jsonGenerator(numberOfRooms, filteredTable[0], id, fullBuildingName, roomAddress, roomLatitude, roomLongitude, result);
+        }
+        return result;
+    });
+}
+exports.parseRoomData = parseRoomData;
+function commonBuildingInfo(theDocument) {
+    return __awaiter(this, void 0, void 0, function* () {
+        let fullBuildingName = searchData(theDocument, "id", "building-info").childNodes[1].childNodes[0].childNodes[0].value.trim();
+        let numberOfRooms = Math.floor(searchData(theDocument, "class", "views-table cols-5 table").childNodes[3].childNodes.length / 2);
+        let roomAddress = searchData(theDocument, "id", "building-info").childNodes[3].childNodes[0].childNodes[0].value.trim();
+        let addressLongLat = yield getLongLat(roomAddress);
+        let roomLatitude = addressLongLat.lat;
+        let roomLongitude = addressLongLat.lon;
+        return {
+            fullBuildingName,
+            roomAddress,
+            roomLatitude,
+            roomLongitude,
+            numberOfRooms,
+        };
+    });
+}
+exports.commonBuildingInfo = commonBuildingInfo;
+function jsonGenerator(numberOfRooms, theTable, id, fullBuildingName, roomAddress, roomLatitude, roomLongitude, result) {
+    let insideTable = theTable.childNodes[3];
+    let roomNumberList = [];
+    let roomSeatsList = [];
+    let roomFurnituresList = [];
+    let roomTypesList = [];
+    let roomHrefList = [];
+    for (let i = 1; i < numberOfRooms * 2; i += 2) {
+        roomNumberList.push(searchData(insideTable.childNodes[i], "class", "views-field views-field-field-room-number").childNodes[1].childNodes[0].value.trim());
+        roomSeatsList.push(searchData(insideTable.childNodes[i], "class", "views-field views-field-field-room-capacity").childNodes[0].value.trim());
+        roomFurnituresList.push(searchData(insideTable.childNodes[i], "class", "views-field views-field-field-room-furniture").childNodes[0].value.trim());
+        roomTypesList.push(searchData(insideTable.childNodes[i], "class", "views-field views-field-field-room-type").childNodes[0].value.trim());
+        roomHrefList.push(searchData(insideTable.childNodes[i], "class", "views-field views-field-nothing").childNodes[1].attrs[0].value.trim());
+    }
     for (let i = 1; i <= numberOfRooms; i++) {
-        let roomNumber = searchData(theDocument, "class", "views-table cols-5 table").childNodes[3].childNodes[2 * i - 1].childNodes[1].childNodes[1].childNodes[0].value.trim();
-        let roomSeats = searchData(theDocument, "class", "views-table cols-5 table").childNodes[3].childNodes[2 * i - 1].childNodes[3].childNodes[0].value.trim();
-        let roomFurniture = searchData(theDocument, "class", "views-table cols-5 table").childNodes[3].childNodes[2 * i - 1].childNodes[5].childNodes[0].value.trim();
-        let roomType = searchData(theDocument, "class", "views-table cols-5 table").childNodes[3].childNodes[2 * i - 1].childNodes[7].childNodes[0].value.trim();
-        let roomHref = searchData(theDocument, "class", "views-table cols-5 table").childNodes[3].childNodes[2 * i - 1].childNodes[9].childNodes[1].attrs[0].value.trim();
+        let roomNumber = roomNumberList[i - 1];
+        let roomSeats = roomSeatsList[i - 1];
+        let roomFurniture = roomFurnituresList[i - 1];
+        let roomType = roomTypesList[i - 1];
+        let roomHref = roomHrefList[i - 1];
         let shortBuildingName = shortNameGenerator(roomHref);
         let roomJson = {
             [id + "_fullname"]: fullBuildingName,
@@ -77,35 +139,6 @@ function jsonGenerator(numberOfRooms, theDocument, id, fullBuildingName, roomAdd
     }
 }
 exports.jsonGenerator = jsonGenerator;
-function commonBuildingInfo(theDocument) {
-    return __awaiter(this, void 0, void 0, function* () {
-        let fullBuildingName = searchData(theDocument, "id", "building-info").childNodes[1].childNodes[0].childNodes[0].value.trim();
-        let roomAddress = searchData(theDocument, "id", "building-info").childNodes[3].childNodes[0].childNodes[0].value.trim();
-        let addressLongLat = yield getLongLat(roomAddress);
-        let roomLatitude = addressLongLat.lat;
-        let roomLongitude = addressLongLat.lon;
-        let numberOfRooms = Math.floor(searchData(theDocument, "class", "views-table cols-5 table").childNodes[3].childNodes.length / 2);
-        return {
-            fullBuildingName,
-            roomAddress,
-            roomLatitude,
-            roomLongitude,
-            numberOfRooms,
-        };
-    });
-}
-exports.commonBuildingInfo = commonBuildingInfo;
-function parseRoomData(id, htmlData) {
-    return __awaiter(this, void 0, void 0, function* () {
-        let roomData = fs.readFileSync("DMP1.htm", "utf8");
-        let result = [];
-        let theDocument = parse5.parse(roomData);
-        let { fullBuildingName, roomAddress, roomLatitude, roomLongitude, numberOfRooms } = yield commonBuildingInfo(theDocument);
-        jsonGenerator(numberOfRooms, theDocument, id, fullBuildingName, roomAddress, roomLatitude, roomLongitude, result);
-        return result;
-    });
-}
-exports.parseRoomData = parseRoomData;
 function searchData(htmlNode, attributeType, attributeValue) {
     if (htmlNode.attrs) {
         if (htmlNode.attrs.find(function (res) {
@@ -125,6 +158,22 @@ function searchData(htmlNode, attributeType, attributeValue) {
     return undefined;
 }
 exports.searchData = searchData;
+function findAllTables(document) {
+    const tables = [];
+    function findTables(node) {
+        if (node.nodeName === 'table') {
+            tables.push(node);
+        }
+        else if (node.childNodes) {
+            let theLength = node.childNodes.length;
+            for (let i = 0; i < theLength; i++) {
+                findTables(node.childNodes[i]);
+            }
+        }
+    }
+    findTables(document);
+    return tables;
+}
 function getLongLat(address) {
     return new Promise((resolve) => {
         let formattedAddress = "http://cs310.students.cs.ubc.ca:11316/api/v1/project_team088/" + address.replace(/ /g, "%20");
@@ -144,6 +193,14 @@ function shortNameGenerator(url) {
     let shortBuildingName = roomNameArray[0];
     return shortBuildingName;
 }
-parseRoomData("DMP", "DMP.htm").then((a) => {
+exports.shortNameGenerator = shortNameGenerator;
+let DMPstring = fs.readFileSync("DMP.htm", "utf8");
+let BRKXstring = fs.readFileSync("BRKX.htm", "utf8");
+let ICCSstring = fs.readFileSync("ICCS.htm", "utf8");
+let buildingList = [];
+buildingList.push(DMPstring);
+buildingList.push(BRKXstring);
+buildingList.push(ICCSstring);
+stringList2jsonList("Harvard", buildingList).then((a) => {
     console.log(a);
 });
