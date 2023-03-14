@@ -3,6 +3,7 @@ import * as parse5 from "parse5";
 import * as http from "http";
 import { Document } from "parse5/dist/tree-adapters/default";
 
+
 // Input: an array containing the html files as strings
 // Output: an array containing the json files
 export function stringList2jsonList(id: string, htmlArray: string[]) {
