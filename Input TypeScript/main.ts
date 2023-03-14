@@ -3,26 +3,24 @@ import * as parse5 from "parse5";
 import * as http from "http";
 import { Document } from "parse5/dist/tree-adapters/default";
 
-
 // Input: an array containing the html files as strings
 // Output: an array containing the json files
 export function stringList2jsonList(id: string, htmlArray: string[]): Promise<any[]> {
 	const jsonList: any[] | PromiseLike<any[]> = [];
 	let promises = [];
-	for (let i = 0; i < htmlArray.length; i++) {
-		promises.push(parseRoomData(id, htmlArray[i]));
+	for (let theHtml of htmlArray) {
+		promises.push(parseRoomData(id, theHtml));
 	}
 
 	return Promise.all(promises)
-		.then((arr) => {
+		.then((buildingsList) => {
 			// process the data and return the result
 
-			for (let i = 0; i < arr.length; i++) {
-				for (let j = 0; j < arr[i].length; j++) {
-					jsonList.push(arr[i][j]);
+			for (let building of buildingsList) {
+				for (let room of building) {
+					jsonList.push(room);
 				}
 			}
-
 			return jsonList;
 		})
 		.catch((error) => {
@@ -31,7 +29,7 @@ export function stringList2jsonList(id: string, htmlArray: string[]): Promise<an
 		});
 }
 
-// Input: id of the Dataset, an html file which represents a building as a string
+// Input: id of the Dataset, a html file which represents a building as a string
 // Output: an array of json, each representing a room in the building
 export async function parseRoomData(id: string, htmlData: string): Promise<Array<{ [x: string]: any }>> {
 	let result: any[] = [];
@@ -39,15 +37,20 @@ export async function parseRoomData(id: string, htmlData: string): Promise<Array
 	let theDocument = parse5.parse(htmlData);
 
 	let tables = findAllTables(theDocument);
-	let filteredTable = []
-	for (let i = 0; i < tables.length; i++) {
-		let table = tables[i];
-		//Check if the table has all the fields we need
-		if (table.childNodes[1].childNodes[1].childNodes[1].attrs[0].value === "views-field views-field-field-room-number"
-			&& table.childNodes[1].childNodes[1].childNodes[3].attrs[0].value === "views-field views-field-field-room-capacity"
-			&& table.childNodes[1].childNodes[1].childNodes[5].attrs[0].value === "views-field views-field-field-room-furniture"
-			&& table.childNodes[1].childNodes[1].childNodes[7].attrs[0].value === "views-field views-field-field-room-type"
-			&& table.childNodes[1].childNodes[1].childNodes[9].attrs[0].value === "views-field views-field-nothing") {
+	let filteredTable = [];
+	for (let table of tables) {
+		// Check if the table has all the fields we need
+		if (
+			table.childNodes[1].childNodes[1].childNodes[1].attrs[0].value ===
+			"views-field views-field-field-room-number" &&
+			table.childNodes[1].childNodes[1].childNodes[3].attrs[0].value ===
+			"views-field views-field-field-room-capacity" &&
+			table.childNodes[1].childNodes[1].childNodes[5].attrs[0].value ===
+			"views-field views-field-field-room-furniture" &&
+			table.childNodes[1].childNodes[1].childNodes[7].attrs[0].value ===
+			"views-field views-field-field-room-type" &&
+			table.childNodes[1].childNodes[1].childNodes[9].attrs[0].value === "views-field views-field-nothing"
+		) {
 			filteredTable.push(table);
 		}
 	}
@@ -64,7 +67,16 @@ export async function parseRoomData(id: string, htmlData: string): Promise<Array
 			return result;
 		}
 
-		jsonGenerator(numberOfRooms, filteredTable[0], id, fullBuildingName, roomAddress, roomLatitude, roomLongitude, result);
+		jsonGenerator(
+			numberOfRooms,
+			filteredTable[0],
+			id,
+			fullBuildingName,
+			roomAddress,
+			roomLatitude,
+			roomLongitude,
+			result
+		);
 	}
 	return result;
 }
@@ -90,7 +102,6 @@ export async function commonBuildingInfo(theDocument: Document): Promise<{ [x: s
 	let roomLatitude = addressLongLat.lat;
 	let roomLongitude = addressLongLat.lon;
 
-
 	return {
 		fullBuildingName,
 		roomAddress,
@@ -100,7 +111,56 @@ export async function commonBuildingInfo(theDocument: Document): Promise<{ [x: s
 	};
 }
 
-// Input: Building informations, which are common to all rooms in the building
+// Input: table containing information of rooms, number of rooms
+// Output: an array of json, each representing a room in the building
+function getRoomInfoList(theTable: any, numberOfRooms: number): any {
+	let insideTable = theTable.childNodes[3];
+	let roomNumberList = [];
+	let roomSeatsList = [];
+	let roomFurnitureList = [];
+	let roomTypesList = [];
+	let roomHrefList = [];
+
+	for (let i = 1; i < numberOfRooms * 2; i += 2) {
+		roomNumberList.push(
+			searchData(
+				insideTable.childNodes[i],
+				"class",
+				"views-field views-field-field-room-number"
+			).childNodes[1].childNodes[0].value.trim()
+		);
+		roomSeatsList.push(
+			searchData(
+				insideTable.childNodes[i],
+				"class",
+				"views-field views-field-field-room-capacity"
+			).childNodes[0].value.trim()
+		);
+		roomFurnitureList.push(
+			searchData(
+				insideTable.childNodes[i],
+				"class",
+				"views-field views-field-field-room-furniture"
+			).childNodes[0].value.trim()
+		);
+		roomTypesList.push(
+			searchData(
+				insideTable.childNodes[i],
+				"class",
+				"views-field views-field-field-room-type"
+			).childNodes[0].value.trim()
+		);
+		roomHrefList.push(
+			searchData(
+				insideTable.childNodes[i],
+				"class",
+				"views-field views-field-nothing"
+			).childNodes[1].attrs[0].value.trim()
+		);
+	}
+	return { roomNumberList, roomSeatsList, roomFurnitureList: roomFurnitureList, roomTypesList, roomHrefList };
+}
+
 // Output: no return value, but the function will write the json file
 export function jsonGenerator(
 	numberOfRooms: number,
@@ -112,30 +172,19 @@ export function jsonGenerator(
 	roomLongitude: any,
 	result: Array<{ [p: string]: any }>
 ): void {
-
-	let insideTable = theTable.childNodes[3]
-	let roomNumberList = []
-	let roomSeatsList = []
-	let roomFurnituresList = []
-	let roomTypesList = []
-	let roomHrefList = []
-
-	for (let i = 1; i < numberOfRooms * 2; i += 2) {
-		roomNumberList.push(searchData(insideTable.childNodes[i], "class", "views-field views-field-field-room-number").childNodes[1].childNodes[0].value.trim())
-		roomSeatsList.push(searchData(insideTable.childNodes[i], "class", "views-field views-field-field-room-capacity").childNodes[0].value.trim())
-		roomFurnituresList.push(searchData(insideTable.childNodes[i], "class", "views-field views-field-field-room-furniture").childNodes[0].value.trim())
-		roomTypesList.push(searchData(insideTable.childNodes[i], "class", "views-field views-field-field-room-type").childNodes[0].value.trim())
-		roomHrefList.push(searchData(insideTable.childNodes[i], "class", "views-field views-field-nothing").childNodes[1].attrs[0].value.trim())
-	}
+	let { roomNumberList, roomSeatsList, roomFurnitureList, roomTypesList, roomHrefList } = getRoomInfoList(
+		theTable,
+		numberOfRooms
+	);
 
 	for (let i = 1; i <= numberOfRooms; i++) {
 		// Getting information specific to each room
-		let roomNumber = roomNumberList[i - 1]
-		let roomSeats = roomSeatsList[i - 1]
-		let roomFurniture = roomFurnituresList[i - 1]
-		let roomType = roomTypesList[i - 1]
-		let roomHref = roomHrefList[i - 1]
-		let shortBuildingName = shortNameGenerator(roomHref)
+		let roomNumber = roomNumberList[i - 1];
+		let roomSeats = roomSeatsList[i - 1];
+		let roomFurniture = roomFurnitureList[i - 1];
+		let roomType = roomTypesList[i - 1];
+		let roomHref = roomHrefList[i - 1];
+		let shortBuildingName = shortNameGenerator(roomHref);
 
 		let roomJson = {
 			[id + "_fullname"]: fullBuildingName,
@@ -153,10 +202,6 @@ export function jsonGenerator(
 		result.push(roomJson);
 	}
 }
-
-
-
-
 
 // Input: node in html AST tree, tag type, tag value
 // Output: if found, return the value of the tag
@@ -181,15 +226,15 @@ export function searchData(htmlNode: any, attributeType: string, attributeValue:
 	return undefined;
 }
 
+// Input: html file
+// Output: a list of tables in the html file
 function findAllTables(document: Document): any[] {
 	const tables: any[] = [];
 
 	function findTables(node: any) {
-		if (node.nodeName === 'table') {
+		if (node.nodeName === "table") {
 			tables.push(node);
-		}
-
-		else if (node.childNodes) {
+		} else if (node.childNodes) {
 			let theLength = node.childNodes.length;
 			for (let i = 0; i < theLength; i++) {
 				findTables(node.childNodes[i]);
@@ -201,9 +246,8 @@ function findAllTables(document: Document): any[] {
 	return tables;
 }
 
-
 // Input: address of the building
-// Output: a promise which represent the longtitude and latitude of the building
+// Output: a promise which represent the longitude and latitude of the building
 export function getLongLat(address: string): Promise<any> {
 	return new Promise((resolve) => {
 		let formattedAddress =
@@ -218,17 +262,22 @@ export function getLongLat(address: string): Promise<any> {
 	});
 }
 
+// Input: the url of the room
+// Output: the short name of the building
 export function shortNameGenerator(url: string): string {
 	let nodeArray = url.split("/");
 	let roomNameArray = nodeArray[nodeArray.length - 1].split("-");
-	let shortBuildingName = roomNameArray[0];
-	return shortBuildingName;
+	return roomNameArray[0];
 }
+
+
+
 
 // Calling the function
 // parseRoomData("DMP", "DMP.htm").then((a) => {
 // 	console.log(a);
 // });
+
 
 
 // read DMP1.htm to string

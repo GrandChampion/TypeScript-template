@@ -39,14 +39,14 @@ const http = __importStar(require("http"));
 function stringList2jsonList(id, htmlArray) {
     const jsonList = [];
     let promises = [];
-    for (let i = 0; i < htmlArray.length; i++) {
-        promises.push(parseRoomData(id, htmlArray[i]));
+    for (let theHtml of htmlArray) {
+        promises.push(parseRoomData(id, theHtml));
     }
     return Promise.all(promises)
-        .then((arr) => {
-        for (let i = 0; i < arr.length; i++) {
-            for (let j = 0; j < arr[i].length; j++) {
-                jsonList.push(arr[i][j]);
+        .then((buildingsList) => {
+        for (let building of buildingsList) {
+            for (let room of building) {
+                jsonList.push(room);
             }
         }
         return jsonList;
@@ -62,13 +62,16 @@ function parseRoomData(id, htmlData) {
         let theDocument = parse5.parse(htmlData);
         let tables = findAllTables(theDocument);
         let filteredTable = [];
-        for (let i = 0; i < tables.length; i++) {
-            let table = tables[i];
-            if (table.childNodes[1].childNodes[1].childNodes[1].attrs[0].value === "views-field views-field-field-room-number"
-                && table.childNodes[1].childNodes[1].childNodes[3].attrs[0].value === "views-field views-field-field-room-capacity"
-                && table.childNodes[1].childNodes[1].childNodes[5].attrs[0].value === "views-field views-field-field-room-furniture"
-                && table.childNodes[1].childNodes[1].childNodes[7].attrs[0].value === "views-field views-field-field-room-type"
-                && table.childNodes[1].childNodes[1].childNodes[9].attrs[0].value === "views-field views-field-nothing") {
+        for (let table of tables) {
+            if (table.childNodes[1].childNodes[1].childNodes[1].attrs[0].value ===
+                "views-field views-field-field-room-number" &&
+                table.childNodes[1].childNodes[1].childNodes[3].attrs[0].value ===
+                    "views-field views-field-field-room-capacity" &&
+                table.childNodes[1].childNodes[1].childNodes[5].attrs[0].value ===
+                    "views-field views-field-field-room-furniture" &&
+                table.childNodes[1].childNodes[1].childNodes[7].attrs[0].value ===
+                    "views-field views-field-field-room-type" &&
+                table.childNodes[1].childNodes[1].childNodes[9].attrs[0].value === "views-field views-field-nothing") {
                 filteredTable.push(table);
             }
         }
@@ -101,24 +104,28 @@ function commonBuildingInfo(theDocument) {
     });
 }
 exports.commonBuildingInfo = commonBuildingInfo;
-function jsonGenerator(numberOfRooms, theTable, id, fullBuildingName, roomAddress, roomLatitude, roomLongitude, result) {
+function getRoomInfoList(theTable, numberOfRooms) {
     let insideTable = theTable.childNodes[3];
     let roomNumberList = [];
     let roomSeatsList = [];
-    let roomFurnituresList = [];
+    let roomFurnitureList = [];
     let roomTypesList = [];
     let roomHrefList = [];
     for (let i = 1; i < numberOfRooms * 2; i += 2) {
         roomNumberList.push(searchData(insideTable.childNodes[i], "class", "views-field views-field-field-room-number").childNodes[1].childNodes[0].value.trim());
         roomSeatsList.push(searchData(insideTable.childNodes[i], "class", "views-field views-field-field-room-capacity").childNodes[0].value.trim());
-        roomFurnituresList.push(searchData(insideTable.childNodes[i], "class", "views-field views-field-field-room-furniture").childNodes[0].value.trim());
+        roomFurnitureList.push(searchData(insideTable.childNodes[i], "class", "views-field views-field-field-room-furniture").childNodes[0].value.trim());
         roomTypesList.push(searchData(insideTable.childNodes[i], "class", "views-field views-field-field-room-type").childNodes[0].value.trim());
         roomHrefList.push(searchData(insideTable.childNodes[i], "class", "views-field views-field-nothing").childNodes[1].attrs[0].value.trim());
     }
+    return { roomNumberList, roomSeatsList, roomFurnitureList: roomFurnitureList, roomTypesList, roomHrefList };
+}
+function jsonGenerator(numberOfRooms, theTable, id, fullBuildingName, roomAddress, roomLatitude, roomLongitude, result) {
+    let { roomNumberList, roomSeatsList, roomFurnitureList, roomTypesList, roomHrefList } = getRoomInfoList(theTable, numberOfRooms);
     for (let i = 1; i <= numberOfRooms; i++) {
         let roomNumber = roomNumberList[i - 1];
         let roomSeats = roomSeatsList[i - 1];
-        let roomFurniture = roomFurnituresList[i - 1];
+        let roomFurniture = roomFurnitureList[i - 1];
         let roomType = roomTypesList[i - 1];
         let roomHref = roomHrefList[i - 1];
         let shortBuildingName = shortNameGenerator(roomHref);
@@ -161,7 +168,7 @@ exports.searchData = searchData;
 function findAllTables(document) {
     const tables = [];
     function findTables(node) {
-        if (node.nodeName === 'table') {
+        if (node.nodeName === "table") {
             tables.push(node);
         }
         else if (node.childNodes) {
@@ -190,8 +197,7 @@ exports.getLongLat = getLongLat;
 function shortNameGenerator(url) {
     let nodeArray = url.split("/");
     let roomNameArray = nodeArray[nodeArray.length - 1].split("-");
-    let shortBuildingName = roomNameArray[0];
-    return shortBuildingName;
+    return roomNameArray[0];
 }
 exports.shortNameGenerator = shortNameGenerator;
 let DMPstring = fs.readFileSync("DMP.htm", "utf8");
