@@ -1,85 +1,7 @@
 import * as fs from "fs-extra";
 import * as parse5 from "parse5";
 import * as http from "http";
-import {Document} from "parse5/dist/tree-adapters/default";
-
-// This part is for mapping long building name to short building name
-const LongShortMap = new Map<string, string>([
-	["Acute Care Unit", "ACU"],
-	["Allard Hall (LAW)", "ALRD"],
-	["Anthropology and Sociology", "ANSO"],
-	["Aquatic Ecosystems Research Laboratory", "AERL"],
-	["Asian Centre", "ACEN"],
-	["Audain Art Centre", "AAC"],
-	["Auditorium", "AUDI"],
-	["Auditorium Annex", "AUDX"],
-	["B.C. Binnings Studio", "BINN"],
-	["Biological Sciences", "BIOL"],
-	["Brock Hall Annex", "BRKX"],
-	["Buchanan", "BUCH"],
-	["Buchanan Tower", "BUTO"],
-	["C. K. Choi Building for The Institute of Asian Res", "CHOI"],
-	["Centre for Interactive Research on Sustainability", "CIRS"],
-	["Chan Centre", "CHAN"],
-	["Chemical and Biological Engineering Building", "CHBE"],
-	["Chemistry", "CHEM"],
-	["Civil and Mechanical Engineering", "CEME"],
-	["D.H. Copp", "COPP"],
-	["David Lam Management Research Centre", "DLAM"],
-	["Detwiller Pavilion", "HSCC"],
-	["Dorothy Somerset Studio", "DSOM"],
-	["Douglas Kenny", "KENN"],
-	["Earth and Ocean Sciences - Main", "EOSM"],
-	["Earth Sciences Building", "ESB"],
-	["Food, Nutrition and Health", "FNH"],
-	["Forest Sciences Centre", "FSC"],
-	["Frank Forward", "FORW"],
-	["Fred Kaiser", "KAIS"],
-	["Frederic Lasserre", "LASR"],
-	["Frederic Wood Theatre", "FRWO"],
-	["Friedman Building", "FRDM"],
-	["Geography", "GEOG"],
-	["George Cunningham", "CUNN"],
-	["Hebb", "HEBB"],
-	["Hennings", "HENN"],
-	["Henry Angus", "ANGU"],
-	["Horticulture Building", "GREN"],
-	["Hugh Dempster Pavilion", "DMP"],
-	["Institute for Computing (ICICS/CS)", "ICCS"],
-	["Iona Building", "IONA"],
-	["Irving K Barber Learning Centre", "IBLC"],
-	["J.B. MacDonald", "MCDN"],
-	["Jack Bell Building for the School of Social Work", "SOWK"],
-	["Leonard S. Klinck (also known as CSCI)", "LSK"],
-	["Life Sciences Centre", "LSC"],
-	["MacLeod", "MCLD"],
-	["MacMillan", "MCML"],
-	["Mathematics", "MATH"],
-	["Mathematics Annex", "MATX"],
-	["Medical Sciences Block C", "MEDC"],
-	["Michael Smith Laboratories", "MSB"],
-	["Music", "MUSC"],
-	["Neville Scarfe", "SCRF"],
-	["Orchard Commons", "ORCH"],
-	["Pharmaceutical Sciences Building", "PHRM"],
-	["Ponderosa Annex E", "PONE"],
-	["Ponderosa Commons: Oak House", "PCOH"],
-	["Ponderosa Office Annex F", "PONF"],
-	["Ponderosa Office Annex H", "PONH"],
-	["Robert F. Osborne Centre", "OSBO"],
-	["School of Population and Public Health", "SPPH"],
-	["Sing Tao", "SOJ"],
-	["Student Recreation Centre", "SRC"],
-	["The Leon and Thea Koerner University Centre", "UCLL"],
-	["Theatre-Film Production Building", "TFPB"],
-	["Theatre-Film Production Building Annex", "TFPX"],
-	["War Memorial Gymnasium", "MGYM"],
-	["Wayne and William White Engineering Design Centre", "EDC"],
-	["Wesbrook", "WESB"],
-	["West Mall Annex", "WMAX"],
-	["West Mall Swing Space", "SWNG"],
-	["Woodward (Instructional Resources Centre-IRC)", "WOOD"],
-]);
+import { Document } from "parse5/dist/tree-adapters/default";
 
 // Input: an array containing the html files as strings
 // Output: an array containing the json files
@@ -111,7 +33,7 @@ export function jsonGenerator(
 	roomAddress: string,
 	roomLatitude: any,
 	roomLongitude: any,
-	result: Array<{[p: string]: any}>
+	result: Array<{ [p: string]: any }>
 ) {
 	for (let i = 1; i <= numberOfRooms; i++) {
 		// Getting information specific to each room
@@ -130,12 +52,13 @@ export function jsonGenerator(
 		let roomHref = searchData(theDocument, "class", "views-table cols-5 table").childNodes[3].childNodes[
 			2 * i - 1
 		].childNodes[9].childNodes[1].attrs[0].value.trim();
+		let shortBuildingName = shortNameGenerator(roomHref)
 
 		let roomJson = {
 			[id + "_fullname"]: fullBuildingName,
-			[id + "_shortname"]: LongShortMap.get(fullBuildingName),
+			[id + "_shortname"]: shortBuildingName,
 			[id + "_number"]: roomNumber,
-			[id + "_name"]: LongShortMap.get(fullBuildingName) + "_" + roomNumber,
+			[id + "_name"]: shortBuildingName + "_" + roomNumber,
 			[id + "_address"]: roomAddress,
 			[id + "_lat"]: roomLatitude,
 			[id + "_lon"]: roomLongitude,
@@ -180,14 +103,14 @@ export async function commonBuildingInfo(theDocument: Document) {
 
 // Input: id of the Dataset, an html file which represents a building as a string
 // Output: an array of json, each representing a room in the building
-export async function parseRoomData(id: string, htmlData: string): Promise<Array<{[x: string]: any}>> {
+export async function parseRoomData(id: string, htmlData: string): Promise<Array<{ [x: string]: any }>> {
 	let roomData = fs.readFileSync("DMP1.htm", "utf8");
 
 	let result: any[] = [];
 
 	let theDocument = parse5.parse(roomData);
 	// Getting the common information bounded to building
-	let {fullBuildingName, roomAddress, roomLatitude, roomLongitude, numberOfRooms} = await commonBuildingInfo(
+	let { fullBuildingName, roomAddress, roomLatitude, roomLongitude, numberOfRooms } = await commonBuildingInfo(
 		theDocument
 	);
 
@@ -232,6 +155,13 @@ export function getLongLat(address: string): Promise<any> {
 			});
 		});
 	});
+}
+
+function shortNameGenerator(url: string) {
+	let nodeArray = url.split("/");
+	let roomNameArray = nodeArray[nodeArray.length - 1].split("-");
+	let shortBuildingName = roomNameArray[0];
+	return shortBuildingName;
 }
 
 // Calling the function
